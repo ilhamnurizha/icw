@@ -1,0 +1,33 @@
+package io.icw.api.manager;
+
+import io.icw.api.db.mongo.MongoAccountLedgerServiceImpl;
+import io.icw.api.db.mongo.MongoAgentServiceImpl;
+import io.icw.api.ApiContext;
+import io.icw.api.task.*;
+import io.icw.core.core.annotation.Component;
+import io.icw.core.core.ioc.SpringLiteContext;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+@Component
+public class ScheduleManager {
+
+    public void start() {
+        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(9);
+        executorService.scheduleAtFixedRate(new DeleteTxsTask(ApiContext.defaultChainId), 2, 60, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(new QueryChainInfoTask(ApiContext.defaultChainId), 2, 60, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(new SyncBlockTask(ApiContext.defaultChainId), 5, 10, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(new StatisticalNulsTask(ApiContext.defaultChainId), 1, 10, TimeUnit.MINUTES);
+        executorService.scheduleAtFixedRate(new StatisticalTask(ApiContext.defaultChainId), 1, 60, TimeUnit.MINUTES);
+        executorService.scheduleAtFixedRate(new UnConfirmTxTask(ApiContext.defaultChainId), 1, 2, TimeUnit.MINUTES);
+        executorService.scheduleAtFixedRate(new StatisticalRewardTask(ApiContext.defaultChainId), 1, 60, TimeUnit.MINUTES);
+        executorService.scheduleAtFixedRate(new GetGlobalInfoTask(ApiContext.defaultChainId), 5, 10, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(new LastDayRewardStatTask(ApiContext.defaultChainId), 0, 1, TimeUnit.HOURS);
+
+        MongoAgentServiceImpl mongoAgentService = SpringLiteContext.getBean(MongoAgentServiceImpl.class);
+        MongoAccountLedgerServiceImpl accountLedgerService = SpringLiteContext.getBean(MongoAccountLedgerServiceImpl.class);
+        executorService.scheduleAtFixedRate(new RefreshCacheTask(ApiContext.defaultChainId, mongoAgentService, accountLedgerService), 10, 10, TimeUnit.MINUTES);
+    }
+}

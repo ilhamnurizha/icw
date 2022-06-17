@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.icw.v2</groupId>
+        <artifactId>icw-build</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>module</artifactId>
+    <packaging>pom</packaging>
+
+    <properties>
+        <java.version>11</java.version>
+    </properties>
+    <modules>
+        <module>icw-account</module>
+        <module>icw-block</module>
+        <module>icw-chain-manager</module>
+        <module>icw-consensus</module>
+        <module>icw-cross-chain</module>
+        <module>icw-ledger</module>
+        <module>icw-network</module>
+        <module>icw-protocol-update</module>
+        <module>icw-smart-contract</module>
+        <module>icw-transaction</module>
+        <module>icw-cmd-client</module>
+        <module>icw-api</module>
+		<module>icw-public-service</module>
+		<module>pow</module>
+    </modules>
+
+    <dependencies>
+        <!-- common-tools -->
+        <dependency>
+            <groupId>io.icw.v2</groupId>
+            <artifactId>icw-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <!-- rpc-tools -->
+        <dependency>
+            <groupId>io.icw.v2</groupId>
+            <artifactId>icw-core-rpc</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <!-- storage-tools -->
+        <dependency>
+            <groupId>io.icw.v2</groupId>
+            <artifactId>icw-core-rockdb</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <!-- base-tools -->
+        <dependency>
+            <groupId>io.icw.v2</groupId>
+            <artifactId>icw-base</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+    </dependencies>
+
+
+</project>
