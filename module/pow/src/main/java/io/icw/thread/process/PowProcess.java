@@ -1,27 +1,42 @@
 package io.icw.thread.process;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import io.icw.Config;
 import io.icw.Constant;
 import io.icw.Utils;
 import io.icw.base.RPCUtil;
 import io.icw.base.basic.AddressTool;
 import io.icw.base.basic.NulsByteBuffer;
-import io.icw.base.data.*;
+import io.icw.base.data.Block;
+import io.icw.base.data.BlockExtendsData;
+import io.icw.base.data.BlockHeader;
+import io.icw.base.data.CoinData;
+import io.icw.base.data.CoinFrom;
+import io.icw.base.data.CoinTo;
+import io.icw.base.data.Transaction;
 import io.icw.base.signture.P2PHKSignature;
 import io.icw.core.core.ioc.SpringLiteContext;
 import io.icw.core.exception.NulsException;
 import io.icw.core.log.Log;
 import io.icw.core.rpc.util.NulsDateUtils;
 import io.icw.pow.BlockPow;
-import io.icw.rpc.*;
+import io.icw.rpc.AccountTools;
+import io.icw.rpc.BlockCall;
+import io.icw.rpc.ChainTools;
+import io.icw.rpc.LegderTools;
+import io.icw.rpc.TransactionTools;
 import io.icw.rpc.vo.Account;
 import io.icw.rpc.vo.AccountBalance;
-
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PowProcess {
 	public static Config config = SpringLiteContext.getBean(Config.class);
@@ -43,6 +58,10 @@ public class PowProcess {
 	private static Map<Long, List> roundMemberMap = new HashMap<Long, List>();
 	
 	private static Map<String, List> membersCacheMap = new HashMap<String, List>();
+	
+	private static Map<String, List> membersHeightCacheMap = new HashMap<String, List>();
+	
+	private static Map<Long, Long> diffCacheMap = new HashMap<Long, Long>();
 	
 //	public static void addRoundMember(long round, String address) {
 //		List<String> members = roundMemberMap.get(round);
@@ -79,7 +98,16 @@ public class PowProcess {
 	}
 	
 	public static List<String> getRoundMembersByHeight(long round, long blockHeight) {
-		List<String> members = new ArrayList<String>();
+		String key = round + "_" + blockHeight;
+		List<String> members = membersHeightCacheMap.get(key);
+		if (members != null) {
+			membersHeightCacheMap.clear();
+			membersHeightCacheMap.put(key, members);
+			return members;
+		}
+		members = new ArrayList<String>();
+//		List<String> members = new ArrayList<String>();
+
 		BlockCall blockCall = new BlockCall();
 		while (true) {
 			Block block = blockCall.getBlockByHeight(config.getChainId(), blockHeight--);
@@ -118,12 +146,13 @@ public class PowProcess {
 			ret.add(members.get(i));
 		}
 		
-//		Log.info("round: " + round + " blockHeight: " + blockHeight + " members: " + members);
+		Log.info("round: " + round + " blockHeight: " + blockHeight + " members: " + ret);
+		membersHeightCacheMap.put(key, ret);
 		return ret;
 	}
 	
 	public static List<BlockPow> getRoundMembers(long round, long blockHeight) {
-		String key = round + "_" + blockHeight;
+		String key = round + "_" ;//+ blockHeight;
 		List<BlockPow> members = membersCacheMap.get(key);
 		if (members != null) {
 			membersCacheMap.clear();
@@ -137,6 +166,7 @@ public class PowProcess {
 			Block block = blockCall.getBlockByHeight(config.getChainId(), blockHeight--);
 			BlockExtendsData extendsData = block.getHeader().getExtendsData();
 			long bRound = extendsData.getRoundIndex() / config.getRound();
+//			Log.info("round: " + round + " bRound: " + bRound + " blockHeight: " + blockHeight);
 			if (bRound == round - 1) {
 				List<Transaction> txs = block.getTxs();
 				List<BlockPow> txMembers = new ArrayList<BlockPow>();
@@ -164,7 +194,7 @@ public class PowProcess {
 //		Log.info("members: " + members);
 		long endTime = System.currentTimeMillis();
 		
-//		Log.info("getRoundMembers cost: " + members.size() + " : " + (endTime - startTime));
+		Log.info("getRoundMembers cost: " + members.size() + " : " + (endTime - startTime));
 		membersCacheMap.put(key, members);
 		return members;
 	}
@@ -208,7 +238,21 @@ public class PowProcess {
     
     public static long getCalculateDiff(long round, long blockHeight) {
     	round--;
+    	
+    	long cacheKey = round;
+    	
     	long diff = 0;
+    	Log.info(diffCacheMap.toString());
+    	
+    	Long diffLong = diffCacheMap.get(round);
+    	Log.info("diffLong=" + diffLong + "::" + round + "::" + blockHeight);
+    	
+    	if (diffLong != null) {
+    		diff = diffLong.longValue();
+    		Log.info("diff=" + diff);
+    		return diff;
+    	}
+    	
     	List<BlockPow> members = getRoundMembers(round, blockHeight);
     	if (!members.isEmpty()) {
 			diff = members.get(0).getDiff();
@@ -239,10 +283,30 @@ public class PowProcess {
     			diff = diff + 1;
     			Log.info("diff=" + diff);
     		}
+    		Log.info("diff=" + diff);
     	}
     	
     	diff = diff < 1 ? 1 : diff;
     	
+    	
+    	diffCacheMap.put(cacheKey, diff);
+    	Log.info(cacheKey + "::" + diffCacheMap.toString());
+    	
+    	Iterator<Long> it = diffCacheMap.keySet().iterator();
+    	
+    	List<Long> rmkeys = new ArrayList<Long>();
+        while(it.hasNext()){
+            Long roundKey = it.next();
+            Log.info("roundKey=" + roundKey);
+            if (roundKey < round - 100) {
+            	rmkeys.add(roundKey);
+            }
+        }
+        
+        for (Long rmkey : rmkeys) {
+        	diffCacheMap.remove(rmkey);
+        }
+
     	return diff;
     }
     
@@ -284,20 +348,24 @@ public class PowProcess {
 				if (blockPow != null) {
 					Log.info("round: " + round + " blockPow: " + blockPow);
 				}
+				
 				if (blockPow != null && roundMap.get(round) == null) {
 					try {
-						String password = addressMap.get("password");
-						accountTools.accountValid(Integer.valueOf( config.getChainId() ).intValue(), address, password);
-			            Account account = accountTools.getAccountByAddress(address);
-			            
-						Transaction tx = new Transaction();
-				        tx.setType(Constant.TX_TYPE_POW);
-				        tx.setTime(NulsDateUtils.getCurrentTimeSeconds());
-				        tx.setTxData(blockPow.serialize());
-				        tx.setCoinData(buildCoinData(tx, AddressTool.getAddress(account.getAddress())));
-				        
-				        signTransaction(tx, account, password);
-				        transactionTools.newTx(tx);
+						int stop = config.getStop();
+				        if (stop != 1) {
+							String password = addressMap.get("password");
+							accountTools.accountValid(Integer.valueOf( config.getChainId() ).intValue(), address, password);
+				            Account account = accountTools.getAccountByAddress(address);
+				            
+							Transaction tx = new Transaction();
+					        tx.setType(Constant.TX_TYPE_POW);
+					        tx.setTime(NulsDateUtils.getCurrentTimeSeconds());
+					        tx.setTxData(blockPow.serialize());
+					        tx.setCoinData(buildCoinData(tx, AddressTool.getAddress(account.getAddress())));
+					        
+					        signTransaction(tx, account, password);
+					        transactionTools.newTx(tx);
+				        }
 					} catch (Exception e) {
 						Log.error(e);
 					}

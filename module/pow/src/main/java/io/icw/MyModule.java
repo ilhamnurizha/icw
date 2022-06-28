@@ -36,14 +36,14 @@ public class MyModule {
         int chainId = config.getChainId();
         ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadUtils.createScheduledThreadPool(2,new NulsThreadFactory("pow"+chainId));
 
-        int stop = config.getStop();
-        System.out.println("stop: " + stop);
-        System.out.println("start PowProcess----------------------");
-        if (stop != 1) {
-        	System.out.println("start PowProcess----------------------");
+//        int stop = config.getStop();
+//        System.out.println("stop: " + stop);
+//        System.out.println("start PowProcess----------------------");
+//        if (stop != 1) {
+//        	System.out.println("start PowProcess----------------------");
         	PowProcess powProcess = new PowProcess();
         	scheduledThreadPoolExecutor.scheduleAtFixedRate(new PowProcessTask(chainId,powProcess),1000L,5000L,TimeUnit.MILLISECONDS);
-        }
+//        }
         
         return RpcModuleState.Running;
     }

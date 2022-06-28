@@ -270,10 +270,10 @@ public class SyncService {
                 accountInfo.setTodayReward(accountInfo.getTotalReward().add(output.getAmount()));
             }
 
-//            if (ApiContext.syncCoinBase && !ApiContext.syncAddress.isEmpty() && ApiContext.syncAddress.contains(output.getAddress())) {
+            if (ApiContext.syncCoinBase && !ApiContext.syncAddress.isEmpty() && ApiContext.syncAddress.contains(output.getAddress())) {
                 AccountLedgerInfo ledgerInfo = queryLedgerInfo(chainId, output.getAddress(), output.getChainId(), output.getAssetsId());
                 txRelationInfoSet.add(new TxRelationInfo(output, tx, ledgerInfo.getTotalBalance()));
-//            }
+            }
         }
         for (String address : addressSet) {
             AccountInfo accountInfo = queryAccountInfo(chainId, address);

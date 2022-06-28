@@ -37,6 +37,8 @@ public class PowProcessor implements TransactionProcessor {
 
     @Override
     public boolean validate(int chainId, Transaction tx, BlockHeader blockHeader) {
+//    	long tx1 =  System.currentTimeMillis();
+//    	Log.info("validate tx1: " + tx1);
         try {
             NulsHash nulsHash = NulsHash.calcHash(tx.serializeForHash());
             if (!nulsHash.equals(tx.getHash())) {
@@ -53,6 +55,8 @@ public class PowProcessor implements TransactionProcessor {
 				roundindex = chainTools.getRoundInfo(chainId).getIndex();
 			}
 			BlockHeader header = BlockCall.getBlockHeader(chainId, blockPow.getHeight());
+//			long tx2 =  System.currentTimeMillis();
+//			Log.info("validate tx2: " + tx2 + ":::" + (tx2 - tx1));
 //			Log.debug("validate: " + header.getHash().toString() 
 //					+ " : " + blockPow.getPreHash()
 //					+ " : " + blockPow.generationHashCodeBySha256()
@@ -74,6 +78,8 @@ public class PowProcessor implements TransactionProcessor {
 			}
 			
 			Map agentAddress = chainTools.getAgentAddressList(chainId);
+//			long tx3 =  System.currentTimeMillis();
+//			Log.info("validate tx3: " + tx3 + ":::" + (tx3 - tx2));
 			List<String> packAddress = (List<String>)agentAddress.get("packAddress");
 			if (packAddress != null && packAddress.size() > 50) {
 				List<String> members = PowProcess.getRoundMembersByHeight(blockPow.getIndex() - 1, header.getHeight());
@@ -81,17 +87,25 @@ public class PowProcessor implements TransactionProcessor {
 					return false;
 				}
 			}
-			
+			long tx4 =  System.currentTimeMillis();
+//			Log.info("validate tx4: " + tx4 + ":::" + (tx4 - tx3));
+			long diff = PowProcess.getCalculateDiff(blockPow.getIndex(), header.getHeight());
+			long tx5 =  System.currentTimeMillis();
+			Log.info("validate tx5: " + tx5 + ":::" + (tx5 - tx4) + ":::" + blockPow.getIndex() + ":::" + header.getHeight());
 			if (header.getHash().toString().equals(blockPow.getPreHash())
 					&& blockPow.generationHashCodeBySha256().equals(blockPow.getHashCode())
 					&& header.getExtendsData().getRoundIndex() / PowProcess.config.getRound() == roundindex / PowProcess.config.getRound()
 					&& (header.getExtendsData().getRoundIndex() - 1) / PowProcess.config.getRound() == roundindex / PowProcess.config.getRound() - 1
 					&& roundindex / PowProcess.config.getRound() + 1 == blockPow.getIndex()
-					&& blockPow.getDiff() == PowProcess.getCalculateDiff(blockPow.getIndex(), header.getHeight())
+					&& blockPow.getDiff() == diff
 					&& blockPow.getHashCode().startsWith(pre)) {
+//				long tx6 =  System.currentTimeMillis();
+//				Log.info("validate tx6: " + tx6 + ":::" + (tx6 - tx5));
 				Log.info("validate tx: " + true);
 				return true;
 			}
+//			long tx6 =  System.currentTimeMillis();
+//			Log.info("validate tx6: " + tx6 + ":::" + (tx6 - tx5));
 			Log.info("validate tx: " + false);
 			return false;
         }catch (Throwable e){

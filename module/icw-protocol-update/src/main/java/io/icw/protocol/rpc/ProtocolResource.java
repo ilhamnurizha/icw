@@ -108,7 +108,10 @@ public class ProtocolResource extends BaseCmd {
         if (currentProtocol.getVersion() != extendsData.getMainVersion()
         		&& currentProtocol.getVersion() != extendsData.getBlockVersion()) {
             NulsLogger logger = context.getLogger();
-            logger.info("------block version error, mainVersion:" + currentProtocol.getVersion() + ",blockVersion:" + extendsData.getMainVersion());
+            logger.info("------block version error, currentVersion:" 
+            		+ currentProtocol.getVersion() + ",mainVersion:" 
+            		+ extendsData.getMainVersion() + ",blockVersion:" 
+            		+ extendsData.getBlockVersion());
             return failed("block version error");
         }
         return success();

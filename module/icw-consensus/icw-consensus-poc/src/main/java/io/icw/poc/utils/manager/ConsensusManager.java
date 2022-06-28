@@ -99,16 +99,16 @@ public class ConsensusManager {
         try {
 //        	chain.getLogger().error("createCoinBaseTx: " + localRound.getIndex() + " : " + localRound.getIndex() % 10 + " : " + extendsData.getPackingIndexOfRound());
         	if (localRound.getIndex() % 10 == 0 && extendsData.getPackingIndexOfRound() == 1) {
-        		chain.getLogger().error("createCoinBaseTx1: " + coinData.getTo().toString());
+//        		chain.getLogger().error("createCoinBaseTx1: " + coinData.getTo().toString());
 	        	List<CoinTo> rewardList2 = getRewardCoin2(chain, localRound, unlockHeight, extendsData);
-	        	chain.getLogger().error("createCoinBaseTx2: " + rewardList2.toString());
+//	        	chain.getLogger().error("createCoinBaseTx2: " + rewardList2.toString());
 	        	for (CoinTo coin : rewardList2) {
 	        		boolean exists = false;
 	        		for (CoinTo coinTo : coinData.getTo()) {
-	        			chain.getLogger().error("createCoinBaseTx2: " + AddressTool.getStringAddressByBytes(coinTo.getAddress())
-	        						+ " : " + AddressTool.getStringAddressByBytes(coin.getAddress())
-	        						+ " : " + AddressTool.getStringAddressByBytes(coinTo.getAddress()).equals(AddressTool.getStringAddressByBytes(coin.getAddress()))
-	        				);
+//	        			chain.getLogger().error("createCoinBaseTx2: " + AddressTool.getStringAddressByBytes(coinTo.getAddress())
+//	        						+ " : " + AddressTool.getStringAddressByBytes(coin.getAddress())
+//	        						+ " : " + AddressTool.getStringAddressByBytes(coinTo.getAddress()).equals(AddressTool.getStringAddressByBytes(coin.getAddress()))
+//	        				);
 	        			if (AddressTool.getStringAddressByBytes(coinTo.getAddress()).equals(AddressTool.getStringAddressByBytes(coin.getAddress()))
 	        					&& coinTo.getAssetsChainId() == coin.getAssetsChainId()
 	        					&& coinTo.getAssetsId() == coin.getAssetsId()) {
@@ -121,7 +121,7 @@ public class ConsensusManager {
 	        			coinData.addTo(coin);
 	        		}
 	            }
-	        	chain.getLogger().error("createCoinBaseTx3: " + coinData.getTo().toString());
+//	        	chain.getLogger().error("createCoinBaseTx3: " + coinData.getTo().toString());
 	        }
             tx.setCoinData(coinData.serialize());
         } catch (Exception e) {
