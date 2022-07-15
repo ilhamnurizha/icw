@@ -262,6 +262,7 @@ public class Chain {
     public String toString() {
         return new StringJoiner(", ", Chain.class.getSimpleName() + "[", "]")
                 .add("parentStartHashCode=" + (this.getParent() == null ? null : this.getParent().getStartHashCode()))
+                .add("parentHashCode=" + (this.getParent() == null ? null : this.getParent().getStartHash()))
                 .add("startHashCode=" + startHashCode)
                 .add("startHeight=" + startHeight)
                 .add("endHeight=" + endHeight)

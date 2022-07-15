@@ -187,12 +187,13 @@ public class AliasServiceImpl implements AliasService, InitializingBean {
         if (!FormatValidUtils.validAlias(alias.getAlias())) {
             return Result.getFailed(AccountErrorCode.ALIAS_FORMAT_WRONG);
         }
-        if (!isAliasUsable(chainId, alias.getAlias())) {
+        AliasPO aliasPo1 = aliasStorageService.getAlias(chainId, alias.getAlias());
+        if (aliasPo1 != null && !Arrays.equals(addrByte, aliasPo1.getAddress())) {
             LoggerUtil.LOG.error("alias is disable,alias: " + alias.getAlias() + ",address: " + addrByte);
             return Result.getFailed(AccountErrorCode.ALIAS_EXIST);
         }
         AliasPO aliasPo = aliasStorageService.getAliasByAddress(chainId, address);
-        if (aliasPo != null) {
+        if (aliasPo != null && !alias.getAlias().equals(aliasPo.getAlias())) {
             LoggerUtil.LOG.error("alias is already exist, alias: " + alias.getAlias() + ",address: " + addrByte);
             return Result.getFailed(AccountErrorCode.ACCOUNT_ALREADY_SET_ALIAS);
         }

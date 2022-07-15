@@ -1715,6 +1715,8 @@ public class TxServiceImpl implements TxService {
                     entry.getKey(), entry.getValue(), blockHeaderStr);
             if (txHashList != null && txHashList.size() > 0) {
                 logger.error("batch module verify fail, module-code:{},  return count:{}", entry.getKey(), txHashList.size());
+                logger.error(txHashList.toString());
+                logger.error(blockHeaderStr);
                 throw new NulsException(TxErrorCode.TX_VERIFY_FAIL);
             }
         }
@@ -2647,7 +2649,11 @@ public class TxServiceImpl implements TxService {
                     }
                     if (!rs) {
                         logger.error("contract error.生成的合约gas返还交易:{}, - 收到的合约gas返还交易：{}", scNewTxHex, receivedScNewTxHex);
-                        throw new NulsException(TxErrorCode.CONTRACT_VERIFY_FAIL);
+                        if (NetworkCall.networkInfoHeight(chainId) - blockHeight > 1000) {
+                        	//sync
+                        } else {
+                        	throw new NulsException(TxErrorCode.CONTRACT_VERIFY_FAIL);
+                        }
                     }
                     //返回智能合约交易给区块
                     if (returnGasIndex != -1) {

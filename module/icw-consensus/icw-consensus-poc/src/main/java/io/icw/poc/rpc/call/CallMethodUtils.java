@@ -67,6 +67,27 @@ public class CallMethodUtils {
             throw new NulsException(e);
         }
     }
+    
+    
+    public static HashMap networkInfo(int chainId) throws NulsException {
+        try {
+            Map<String, Object> callParams = new HashMap<>(4);
+            callParams.put(Constants.CHAIN_ID, chainId);
+            Response cmdResp = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_info", callParams);
+            if (!cmdResp.isSuccess()) {
+                throw new NulsException(ConsensusErrorCode.DATA_ERROR);
+            }
+            HashMap callResult = (HashMap) ((HashMap) cmdResp.getResponseData()).get("nw_info");
+            if (callResult == null || callResult.size() == 0) {
+                throw new NulsException(ConsensusErrorCode.DATA_ERROR);
+            }
+            return callResult;
+        } catch (NulsException e) {
+            throw e;
+        }catch (Exception e) {
+            throw new NulsException(e);
+        }
+    }
 
     /**
      * 创建多签账户

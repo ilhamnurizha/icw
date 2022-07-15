@@ -82,6 +82,10 @@ public class BlockValidator {
         MeetingMember member = currentRound.getMember(extendsData.getPackingIndexOfRound());
         boolean validResult = punishValidate(block, currentRound, member, chain, blockHeaderHash);
         if (!validResult) {
+        	currentRound = roundManager.getRound(chain, extendsData, false);
+        	validResult = punishValidate(block, currentRound, member, chain, blockHeaderHash);
+        }
+        if (!validResult) {
             if (roundValidResult.isValidResult()) {
                 roundManager.rollBackRound(chain, currentRound.getIndex());
             }

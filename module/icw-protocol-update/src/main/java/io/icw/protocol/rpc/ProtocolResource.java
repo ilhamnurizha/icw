@@ -105,7 +105,8 @@ public class ProtocolResource extends BaseCmd {
         ProtocolContext context = ContextManager.getContext(chainId);
         ProtocolVersion currentProtocol = context.getCurrentProtocolVersion();
         //收到的新区块和本地主网版本不一致，验证不通过
-        if (currentProtocol.getVersion() != extendsData.getMainVersion()
+        if (currentProtocol.getVersion() != 1 
+        		&& currentProtocol.getVersion() != extendsData.getMainVersion()
         		&& currentProtocol.getVersion() != extendsData.getBlockVersion()) {
             NulsLogger logger = context.getLogger();
             logger.info("------block version error, currentVersion:" 

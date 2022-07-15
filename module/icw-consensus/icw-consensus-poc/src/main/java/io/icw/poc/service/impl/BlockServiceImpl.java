@@ -18,6 +18,7 @@ import io.icw.poc.rpc.call.CallMethodUtils;
 import io.icw.poc.service.BlockService;
 import io.icw.poc.utils.manager.BlockManager;
 import io.icw.poc.utils.manager.ChainManager;
+import io.icw.poc.utils.manager.RoundManager;
 import io.icw.poc.utils.validator.BlockValidator;
 
 import java.util.ArrayList;
@@ -34,7 +35,9 @@ import java.util.Map;
  */
 @Component
 public class BlockServiceImpl implements BlockService {
-
+	@Autowired
+    private RoundManager roundManager;
+	
     @Autowired
     private ChainManager chainManager;
 
@@ -159,7 +162,14 @@ public class BlockServiceImpl implements BlockService {
         try {
             Block block = new Block();
             block.parse(new NulsByteBuffer(RPCUtil.decode(blockHex)));
-            blockValidator.validate(isDownload, chain, block);
+            try {
+            	blockValidator.validate(isDownload, chain, block);
+            } catch (Exception e) {
+            	chain.getLogger().error("Block validation failed!", e);
+            	roundManager.clearRound(chain, block.getHeader().getExtendsData().getRoundIndex() - 1);
+            	blockValidator.validate(isDownload, chain, block);
+            	chain.getLogger().error("clear cache try Block validation failed!");
+            }
             Response response = CallMethodUtils.verify(chainId, block.getTxs(), block.getHeader(), chain.getNewestHeader(), chain.getLogger());
             if (response.isSuccess()) {
                 Map responseData = (Map) response.getResponseData();

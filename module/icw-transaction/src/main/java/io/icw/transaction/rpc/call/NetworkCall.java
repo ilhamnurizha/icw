@@ -23,11 +23,13 @@ import io.icw.base.RPCUtil;
 import io.icw.base.data.BaseBusinessMessage;
 import io.icw.base.data.NulsHash;
 import io.icw.base.data.Transaction;
+import io.icw.core.constant.CommonCodeConstanst;
 import io.icw.core.exception.NulsException;
 import io.icw.core.rpc.info.Constants;
 import io.icw.core.rpc.model.ModuleE;
 import io.icw.core.rpc.model.message.MessageUtil;
 import io.icw.core.rpc.model.message.Request;
+import io.icw.core.rpc.model.message.Response;
 import io.icw.core.rpc.netty.processor.ResponseMessageProcessor;
 import io.icw.transaction.model.bo.Chain;
 import io.icw.transaction.constant.TxConstant;
@@ -213,5 +215,23 @@ public class NetworkCall {
         return NetworkCall.sendToNode(chain, message, nodeId, NW_RECEIVE_TX);
     }
 
-
+    public static long networkInfoHeight(int chainId) throws NulsException {
+        try {
+            Map<String, Object> callParams = new HashMap<>(4);
+            callParams.put(Constants.CHAIN_ID, chainId);
+            Response cmdResp = ResponseMessageProcessor.requestAndResponse(ModuleE.NW.abbr, "nw_info", callParams);
+            if (!cmdResp.isSuccess()) {
+                throw new NulsException(CommonCodeConstanst.FAILED);
+            }
+            HashMap callResult = (HashMap) ((HashMap) cmdResp.getResponseData()).get("nw_info");
+            if (callResult == null || callResult.size() == 0) {
+                throw new NulsException(CommonCodeConstanst.FAILED);
+            }
+            return Long.valueOf(callResult.get("netBestHeight").toString());
+        } catch (NulsException e) {
+            throw e;
+        }catch (Exception e) {
+            throw new NulsException(e);
+        }
+    }
 }

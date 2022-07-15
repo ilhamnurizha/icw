@@ -226,6 +226,7 @@ public class ProtocolServiceImpl implements ProtocolService {
                     }
                     boolean b = service.save(chainId, statisticsInfo);
                     logger.info("height-" + height + ", save-" + b + ", new statisticsInfo-" + statisticsInfo);
+                    logger.info("height-" + height + ", save-" + b + ", new currentProtocolVersion-" + currentProtocolVersion);
                     //如果某协议版本连续统计确认数大于阈值,则进行版本升级
                     if (statisticsInfo.getCount() >= statictisProtocolVersion.getContinuousIntervalCount() && statictisProtocolVersion.getVersion() > currentProtocolVersion.getVersion()) {
                         short localVersion = context.getLocalProtocolVersion().getVersion();

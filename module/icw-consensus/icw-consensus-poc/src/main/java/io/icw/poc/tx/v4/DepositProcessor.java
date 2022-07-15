@@ -16,6 +16,7 @@ import io.icw.core.constant.TxType;
 import io.icw.core.core.annotation.Autowired;
 import io.icw.core.core.annotation.Component;
 import io.icw.core.exception.NulsException;
+import io.icw.core.log.Log;
 import io.icw.poc.constant.ConsensusConstant;
 import io.icw.poc.constant.ConsensusErrorCode;
 import io.icw.poc.utils.LoggerUtil;
@@ -92,9 +93,15 @@ public class DepositProcessor implements TransactionProcessor {
                 BigInteger totalDeposit = BigInteger.ZERO;
                 if (agentDepositTotalMap.containsKey(agentHash)) {
                     totalDeposit = agentDepositTotalMap.get(agentHash).add(deposit.getDeposit());
+                    chain.getLogger().info(totalDeposit + ":::" + chain.getConfig().getCommissionMax());
                     if (totalDeposit.compareTo(chain.getConfig().getCommissionMax()) > 0) {
-                        chain.getLogger().info("Node delegation amount exceeds maximum delegation amount");
-                        throw new NulsException(ConsensusErrorCode.DEPOSIT_OVER_AMOUNT);
+                    	Map networkInfo = CallMethodUtils.networkInfo(chainId);
+                    	if (Long.valueOf(networkInfo.get("netBestHeight").toString()) - 1000 > blockHeader.getHeight()) {
+                    		agentDepositTotalMap.put(agentHash, totalDeposit);
+                    	} else {
+	                        chain.getLogger().info("Node delegation amount exceeds maximum delegation amount");
+	                        throw new NulsException(ConsensusErrorCode.DEPOSIT_OVER_AMOUNT);
+                    	}
                     } else {
                         agentDepositTotalMap.put(agentHash, totalDeposit);
                     }
