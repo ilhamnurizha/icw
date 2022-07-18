@@ -218,6 +218,7 @@ public class PowProcess {
 		BlockCall blockCall = new BlockCall();
 		blockCache.clear();
 		Map<String, String> hashCodeMap = new HashMap<String, String>();
+		long startBlockHeight = blockHeight;
 		while (true) {
 			Block block = null;
 			try {
@@ -246,11 +247,11 @@ public class PowProcess {
 							BlockHeader header = powBlock.getHeader();
 							BlockExtendsData powExtendsData = powBlock.getHeader().getExtendsData();
 							
-							long diff = PowProcess.getCalculateDiff(blockPow.getIndex(), header.getHeight());
-							String pre = "";
-							for (int i = 0; i < blockPow.getDiff(); i++) {
-								pre = pre + "0";
-							}
+//							long diff = PowProcess.getCalculateDiff(blockPow.getIndex(), startBlockHeight);
+//							String pre = "";
+//							for (int i = 0; i < blockPow.getDiff(); i++) {
+//								pre = pre + "0";
+//							}
 							
 							Log.info(header.getHash().toString() + "=" + blockPow.getPreHash());
 							Log.info(blockPow.generationHashCodeBySha256() + "=" + (blockPow.getHashCode()));
@@ -259,16 +260,17 @@ public class PowProcess {
 							Log.info(String.valueOf((header.getExtendsData().getRoundIndex() - 1) / config.getRound()) 
 									+ "=" + String.valueOf(round - 2));
 							Log.info(blockPow.getIndex() + "=" + round);
-							Log.info(blockPow.getDiff() + "=" + diff);
-							Log.info(String.valueOf(blockPow.getHashCode().startsWith(pre)));
+//							Log.info(blockPow.getDiff() + "=" + diff);
+//							Log.info(String.valueOf(blockPow.getHashCode().startsWith(pre)));
 							
 							if (header.getHash().toString().equals(blockPow.getPreHash())
 									&& blockPow.generationHashCodeBySha256().equals(blockPow.getHashCode())
 									&& header.getExtendsData().getRoundIndex() / config.getRound() == round - 1
 									&& (header.getExtendsData().getRoundIndex() - 1) / config.getRound() == round - 2
 									&& blockPow.getIndex() == round
-									&& blockPow.getDiff() == diff
-									&& blockPow.getHashCode().startsWith(pre)) {
+//									&& blockPow.getDiff() == diff
+//									&& blockPow.getHashCode().startsWith(pre)) {
+									) {
 								if (hashCodeMap.containsKey(blockPow.getHashCode())) {
 									txMembers.remove(hashCodeMap.get(blockPow.getHashCode()));
 									members.remove(hashCodeMap.get(blockPow.getHashCode()));
