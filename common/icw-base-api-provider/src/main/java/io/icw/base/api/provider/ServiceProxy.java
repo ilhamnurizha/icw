@@ -34,6 +34,7 @@ public class ServiceProxy implements MethodInterceptor {
         try{
             return methodProxy.invokeSuper(o, objects);
         }catch(Exception e){
+        	Log.error("Calling provider interface failed.", e);
             Log.error("Calling provider interface failed. service:{} - method:{} ,message :{}",o.getClass(),method.getName(),e.getMessage());
             return BaseService.fail(CommonCodeConstanst.FAILED);
         }

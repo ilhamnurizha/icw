@@ -43,6 +43,8 @@ public class DropTableTest {
         mongoDBService.dropTable(DBTableConstant.CONTRACT_TX_TABLE + chainId);
         mongoDBService.dropTable(DBTableConstant.TOKEN_TRANSFER_TABLE + chainId);
         mongoDBService.dropTable(DBTableConstant.CONTRACT_RESULT_TABLE + chainId);
+        mongoDBService.dropTable(DBTableConstant.CONTRACT_ORDER_TABLE + chainId);
+        mongoDBService.dropTable(DBTableConstant.CONTRACT_TRADE_TABLE + chainId);
         mongoDBService.dropTable(DBTableConstant.STATISTICAL_TABLE + chainId);
 
         for (int i = 0; i < TX_RELATION_SHARDING_COUNT; i++) {

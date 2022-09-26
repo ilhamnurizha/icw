@@ -183,7 +183,7 @@ public class MeetingRound {
 
     public MeetingMember getMember(byte[] address,Chain chain) {
         for (MeetingMember member : memberList) {
-        	Log.info("wtf:" + AddressTool.getStringAddressByBytes(address) + "|||" + AddressTool.getStringAddressByBytes(member.getAgent().getPackingAddress()));
+//        	Log.info("wtf:" + AddressTool.getStringAddressByBytes(address) + "|||" + AddressTool.getStringAddressByBytes(member.getAgent().getPackingAddress()));
             if (Arrays.equals(address, member.getAgent().getPackingAddress()) && validAccount(chain, AddressTool.getStringAddressByBytes(member.getAgent().getPackingAddress()))) {
                 return member;
             }
@@ -193,10 +193,10 @@ public class MeetingRound {
 
     private boolean validAccount(Chain chain,String address) {
         try {
-        	Log.info("wtf:" + chain.getConfig().getChainId() + " : " + chain.getConfig().getPassword());
+//        	Log.info("wtf:" + chain.getConfig().getChainId() + " : " + chain.getConfig().getPassword());
             HashMap callResult = CallMethodUtils.accountValid(chain.getConfig().getChainId(), address, chain.getConfig().getPassword());
             String priKey = (String) callResult.get("priKey");
-            Log.info("wtf:" + chain.getConfig().getChainId() + " : " + chain.getConfig().getPassword() + " : " + priKey);
+//            Log.info("wtf:" + chain.getConfig().getChainId() + " : " + chain.getConfig().getPassword() + " : " + priKey);
             if (StringUtils.isNotBlank(priKey)){
                 return true;
             }

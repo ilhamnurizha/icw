@@ -105,7 +105,9 @@ public class SyncService {
 
 
     public boolean syncNewBlock(int chainId, BlockInfo blockInfo) {
-        clear(chainId);
+    	LoggerUtil.commonLog.info("-----height start:" + blockInfo.getHeader().getHeight() + "-----txCount:" + blockInfo.getHeader().getTxCount());
+        
+    	clear(chainId);
         long time1, time2;
         time1 = System.currentTimeMillis();
         findAddProcessAgentOfBlock(chainId, blockInfo);
@@ -270,10 +272,10 @@ public class SyncService {
                 accountInfo.setTodayReward(accountInfo.getTotalReward().add(output.getAmount()));
             }
 
-            if (ApiContext.syncCoinBase && !ApiContext.syncAddress.isEmpty() && ApiContext.syncAddress.contains(output.getAddress())) {
+//            if (ApiContext.syncCoinBase && !ApiContext.syncAddress.isEmpty() && ApiContext.syncAddress.contains(output.getAddress())) {
                 AccountLedgerInfo ledgerInfo = queryLedgerInfo(chainId, output.getAddress(), output.getChainId(), output.getAssetsId());
                 txRelationInfoSet.add(new TxRelationInfo(output, tx, ledgerInfo.getTotalBalance()));
-            }
+//            }
         }
         for (String address : addressSet) {
             AccountInfo accountInfo = queryAccountInfo(chainId, address);
@@ -439,7 +441,8 @@ public class SyncService {
             ContractCallInfo callInfo = (ContractCallInfo) tx.getTxData();
             ContractInfo contractInfo = queryContractInfo(chainId, callInfo.getContractAddress());
             contractInfo.setTxCount(contractInfo.getTxCount() + 1);
-
+            
+            callInfo.getResultInfo().setContractMethod(callInfo.getMethodName());
             contractResultList.add(callInfo.getResultInfo());
             createContractTxInfo(tx, contractInfo, callInfo.getMethodName());
 
@@ -743,6 +746,7 @@ public class SyncService {
         ContractInfo contractInfo = queryContractInfo(chainId, callInfo.getContractAddress());
         contractInfo.setTxCount(contractInfo.getTxCount() + 1);
 
+        callInfo.getResultInfo().setContractMethod(callInfo.getMethodName());
         contractResultList.add(callInfo.getResultInfo());
         createContractTxInfo(tx, contractInfo, callInfo.getMethodName());
 

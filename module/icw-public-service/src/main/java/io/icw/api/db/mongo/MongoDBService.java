@@ -297,19 +297,46 @@ public class MongoDBService implements InitializingBean {
                 list.add(document);
             }
         };
-
+        LoggerUtil.commonLog.error("???????????????????????????????????????");
         if (var1 == null && sort == null) {
             collection.find().skip((pageNumber - 1) * pageSize).limit(pageSize).forEach(listBlocker);
         } else if (var1 == null && sort != null) {
-            collection.find().sort(sort).skip((pageNumber - 1) * pageSize).limit(pageSize).forEach(listBlocker);
+        	LoggerUtil.commonLog.error("???????????????????????????????????????");
+            collection.find().collation(Collation.builder().locale("en_US").numericOrdering(true).build()).sort(sort).skip((pageNumber - 1) * pageSize).limit(pageSize).forEach(listBlocker);
         } else if (var1 != null && sort == null) {
             collection.find(var1).skip((pageNumber - 1) * pageSize).limit(pageSize).forEach(listBlocker);
         } else {
-            collection.find(var1).sort(sort).skip((pageNumber - 1) * pageSize).limit(pageSize).forEach(listBlocker);
+        	LoggerUtil.commonLog.error("???????????????????????????????????????");
+            collection.find(var1).collation(Collation.builder().locale("en_US").numericOrdering(true).build()).sort(sort).skip((pageNumber - 1) * pageSize).limit(pageSize).forEach(listBlocker);
         }
         return list;
     }
 
+    public List<Document> pageQuery(String collName, Bson var1, Bson sort, int pageNumber, int pageSize, int skipNumber) {
+        MongoCollection<Document> collection = getCollection(collName);
+        List<Document> list = new ArrayList<>();
+        Consumer<Document> listBlocker = new Consumer<>() {
+            @Override
+            public void accept(final Document document) {
+                list.add(document);
+            }
+        };
+
+        LoggerUtil.commonLog.error("???????????????????????????????????????");
+        if (var1 == null && sort == null) {
+            collection.find().skip((pageNumber - 1) * pageSize - skipNumber).limit(pageSize).forEach(listBlocker);
+        } else if (var1 == null && sort != null) {
+        	LoggerUtil.commonLog.error("???????????????????????????????????????");
+            collection.find().collation(Collation.builder().locale("en_US").numericOrdering(true).build()).sort(sort).skip((pageNumber - 1) * pageSize - skipNumber).limit(pageSize).forEach(listBlocker);
+        } else if (var1 != null && sort == null) {
+            collection.find(var1).skip((pageNumber - 1) * pageSize - skipNumber).limit(pageSize).forEach(listBlocker);
+        } else {
+        	LoggerUtil.commonLog.error("???????????????????????????????????????");
+            collection.find(var1).collation(Collation.builder().locale("en_US").numericOrdering(true).build()).sort(sort).skip((pageNumber - 1) * pageSize - skipNumber).limit(pageSize).forEach(listBlocker);
+        }
+        return list;
+    }
+    
     public List<Document> pageQuery(String collName, Bson var1, BasicDBObject fields, Bson sort, int pageNumber, int pageSize) {
         MongoCollection<Document> collection = getCollection(collName);
         List<Document> list = new ArrayList<>();

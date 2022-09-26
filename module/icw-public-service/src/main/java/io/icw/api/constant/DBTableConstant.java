@@ -53,6 +53,10 @@ public interface DBTableConstant {
     String TOKEN_TRANSFER_TABLE = "token_transfer_table_";
     //智能合约结果记录
     String CONTRACT_RESULT_TABLE = "contract_result_table_";
+    //订单录
+    String CONTRACT_ORDER_TABLE = "contract_order_table_";
+    //交易记录
+    String CONTRACT_TRADE_TABLE = "contract_trade_table_";
     //统计表
     String STATISTICAL_TABLE = "statistical_table_";
 

@@ -66,7 +66,7 @@ public class BlockValidator {
             chain.getLogger().error("Block Header Verification Error!");
             throw new NulsException(ConsensusErrorCode.SIGNATURE_ERROR);
         }
-        if (block.getHeader().getTime() - 10 > NulsDateUtils.getCurrentTimeSeconds()) {
+        if (block.getHeader().getTime() - 12 > NulsDateUtils.getCurrentTimeSeconds()) {
             chain.getLogger().error("There is a big difference between the block time and the actual time!");
             throw new NulsException(ConsensusErrorCode.ERROR_UNLOCK_TIME);
         }

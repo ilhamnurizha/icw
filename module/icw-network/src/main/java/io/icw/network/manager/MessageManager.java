@@ -363,7 +363,7 @@ public class MessageManager extends BaseManager {
      * @return
      */
     public NetworkEventResult broadcastToNodes(byte[] message, String cmd, List<Node> nodes, boolean asyn, int percent) {
-    	Log.info("broadcastToNodes nodes={} ", nodes.size());
+//    	Log.info("broadcastToNodes nodes={} ", nodes.size());
         if (nodes.size() > NetworkConstant.BROADCAST_MIN_PEER_NUMBER && percent < NetworkConstant.FULL_BROADCAST_PERCENT) {
             Collections.shuffle(nodes);
             double d = BigDecimal.valueOf(percent).divide(BigDecimal.valueOf(NetworkConstant.FULL_BROADCAST_PERCENT), 2, RoundingMode.HALF_DOWN).doubleValue();
@@ -373,14 +373,14 @@ public class MessageManager extends BaseManager {
             }
             nodes = nodes.subList(0, toIndex);
         }
-        Log.info("broadcastToNodes nodes={} ", nodes.size());
+//        Log.info("broadcastToNodes nodes={} ", nodes.size());
         for (Node node : nodes) {
             if (node.getChannel() == null || !node.getChannel().isActive()) {
                 Log.info("broadcastToNodes node={} is not Active", node.getId());
                 continue;
             }
             try {
-            	LoggerUtil.COMMON_LOG.info("####,node={},cmd={} add to cache", node.getId(), cmd);
+//            	LoggerUtil.COMMON_LOG.info("####,node={},cmd={} add to cache", node.getId(), cmd);
                 if (asyn) {
                     node.getChannel().eventLoop().execute(() -> {
                         Channel channel = node.getChannel();

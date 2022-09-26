@@ -28,8 +28,8 @@ public class RefreshCacheTask implements Runnable {
     @Override
     public void run() {
         try {
-            PageInfo<AgentInfo> agentPageInfo = agentService.getAgentList(chainId, 0, 1, 200);
-            ApiContext.agentPageInfo = agentPageInfo;
+//            PageInfo<AgentInfo> agentPageInfo = agentService.getAgentList(chainId, 0, 1, 200, null, 0);
+//            ApiContext.agentPageInfo = agentPageInfo;
 
             PageInfo<MiniAccountInfo> miniAccountPageInfo = accountLedgerService.getAssetRanking(chainId, chainId, 1, 1, 15);
             ApiContext.miniAccountPageInfo = miniAccountPageInfo;

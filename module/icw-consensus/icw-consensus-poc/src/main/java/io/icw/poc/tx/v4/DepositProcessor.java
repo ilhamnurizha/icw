@@ -96,7 +96,7 @@ public class DepositProcessor implements TransactionProcessor {
                     chain.getLogger().info(totalDeposit + ":::" + chain.getConfig().getCommissionMax());
                     if (totalDeposit.compareTo(chain.getConfig().getCommissionMax()) > 0) {
                     	Map networkInfo = CallMethodUtils.networkInfo(chainId);
-                    	if (Long.valueOf(networkInfo.get("netBestHeight").toString()) - 1000 > blockHeader.getHeight()) {
+                    	if (Long.valueOf(networkInfo.get("netBestHeight").toString()) - 100 > blockHeader.getHeight()) {
                     		agentDepositTotalMap.put(agentHash, totalDeposit);
                     	} else {
 	                        chain.getLogger().info("Node delegation amount exceeds maximum delegation amount");

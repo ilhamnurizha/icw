@@ -62,7 +62,7 @@ public class MongoPunishServiceImpl implements PunishService {
     }
 
     public long getYellowCount(int chainId, String agentAddress) {
-        Bson filter = and(eq("type", 1), eq("address", agentAddress));
+        Bson filter = and(eq("address", agentAddress), eq("type", 1));
         long count = mongoDBService.getCount(PUNISH_TABLE + chainId, filter);
         return count;
     }

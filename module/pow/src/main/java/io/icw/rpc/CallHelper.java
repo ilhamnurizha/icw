@@ -23,6 +23,7 @@
  */
 package io.icw.rpc;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import io.icw.core.constant.ErrorCode;
@@ -30,8 +31,10 @@ import io.icw.core.exception.NulsException;
 import io.icw.core.log.Log;
 import io.icw.core.parse.JSONUtils;
 import io.icw.core.rpc.info.Constants;
+import io.icw.core.rpc.model.ModuleE;
 import io.icw.core.rpc.model.message.Response;
 import io.icw.core.rpc.netty.processor.ResponseMessageProcessor;
+import io.icw.core.rpc.util.RpcCall;
 
 public class CallHelper {
     /**
@@ -57,5 +60,17 @@ public class CallHelper {
             }
             throw new NulsException(e);
         }
+    }
+    
+    public static Map getConsensusConfig(int chainId) throws NulsException {
+    	Map configMap = new HashMap();
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.CHAIN_ID, chainId);
+        try {
+        	configMap = (Map) RpcCall.request(ModuleE.CS.abbr, "cs_getConsensusConfig", params);
+        } catch (NulsException e) {
+        	throw new NulsException(e);
+        }
+        return configMap;
     }
 }

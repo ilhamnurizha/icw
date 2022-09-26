@@ -48,8 +48,8 @@ public class PowAlgorithmThread extends Thread {
 	public void run() {
 		while (true) {
 			try {
-//				Log.info("round: " + round);
 				if (start && roundMap.get(round) == null) {
+					Log.info("round: " + round  + " height: " + blockHeader.getHeight());
 					long timeMillis = System.currentTimeMillis();
 					BlockPow blockPow = new BlockPow();
 					blockPow.setTimestamp(timeMillis);
@@ -60,18 +60,17 @@ public class PowAlgorithmThread extends Thread {
 					blockPow.setAddress(packingAddress);
 					blockPow.setPowTimestamp(timeMillis);
 					
-					blockPow.setDiff(PowProcess.getCalculateDiff(round, blockPow.getHeight()));
-//					Log.info("hash: " + PowAlgorithm.hash + ":"  + Thread.currentThread().getId() + ":" + Thread.currentThread().getName());
+					if (round >= PowProcess.divideRound4) {
+						blockPow.setDiff(PowProcess.getCalculateDiffV4(round, blockPow.getHeight()));
+					} else {
+						blockPow.setDiff(PowProcess.getCalculateDiff(round, blockPow.getHeight()));
+					}
+					Log.info("diff: " + blockPow.getDiff());
 					PowAlgorithm.pow(blockPow.getDiff(), blockPow);
-//					Log.info("hash: " + PowAlgorithm.hash + ":"  + Thread.currentThread().getId() + ":" + Thread.currentThread().getName());
-//					Log.info("blockPow: " + blockPow);
-					
-//					Log.info("getRoundMembersByHeight: " 
-//							+ PowProcess.getRoundMembersByHeight(round, blockHeader.getHeight()).size() 
-//							+ " getPackNumber: " + PowProcess.config.getPackNumber());
+					Log.info("hash:::::::::::::: " + PowAlgorithm.hash);
 					
 					if (PowAlgorithm.hash != null
-							&& PowProcess.getRoundMembersByHeight(round, blockHeader.getHeight()).size() < PowProcess.config.getPackNumber()) {
+							&& PowProcess.getRoundMembersByHeight(round, blockHeader.getHeight(), true).size() < PowProcess.config.getPackNumber()) {
 						blockPow.setHashCode(PowAlgorithm.hash);
 						
 						Log.info("blockPow: " + blockPow);

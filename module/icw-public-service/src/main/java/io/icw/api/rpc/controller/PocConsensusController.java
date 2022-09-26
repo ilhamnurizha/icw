@@ -138,8 +138,10 @@ public class PocConsensusController {
 
     @RpcMethod("getConsensusNodes")
     public RpcResult getConsensusNodes(List<Object> params) {
-        VerifyUtils.verifyParams(params, 4);
+//        VerifyUtils.verifyParams(params, 4);
         int chainId, pageNumber, pageSize, type;
+        String keyword = null;
+        int order = 0;
         try {
             chainId = (int) params.get(0);
         } catch (Exception e) {
@@ -163,36 +165,54 @@ public class PocConsensusController {
         if (type < 0 || type > 3) {
             return RpcResult.paramError("[type] is invalid");
         }
+        
+        try {
+            keyword = (String) params.get(4);
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        
+        try {
+        	order = (int) params.get(5);
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        
         if (pageNumber <= 0) {
             pageNumber = 1;
         }
         if (pageSize <= 0 || pageSize > 500) {
             pageSize = 10;
         }
-
+        
         PageInfo<AgentInfo> pageInfo;
         if (!CacheManager.isChainExist(chainId)) {
             pageInfo = new PageInfo<>(pageNumber, pageSize);
             return new RpcResult().setResult(pageInfo);
         }
 
-        if (apiConfig.getChainId() == chainId && type == 0 && pageNumber == 1 && pageSize > 50) {
-            pageInfo = ApiContext.agentPageInfo;
-        } else {
-            pageInfo = agentService.getAgentList(chainId, type, pageNumber, pageSize);
-        }
+//        if (apiConfig.getChainId() == chainId && type == 0 && pageNumber == 1 && pageSize > 50) {
+//            pageInfo = ApiContext.agentPageInfo;
+//        } else {
+            
+//        }
+        
+        pageInfo = agentService.getAgentList(chainId, type, pageNumber, pageSize, keyword, order);
 
         for (AgentInfo agentInfo : pageInfo.getList()) {
-            long count = punishService.getYellowCount(chainId, agentInfo.getAgentAddress());
-            if (agentInfo.getTotalPackingCount() != 0 || count != 0) {
-                agentInfo.setLostRate(DoubleUtils.div(count, count + agentInfo.getTotalPackingCount()));
-            }
-            agentInfo.setYellowCardCount((int) count);
+//            long count = punishService.getYellowCount(chainId, agentInfo.getAgentAddress());
+//            if (agentInfo.getTotalPackingCount() != 0 || count != 0) {
+//                agentInfo.setLostRate(DoubleUtils.div(count, count + agentInfo.getTotalPackingCount()));
+//            }
+//            agentInfo.setYellowCardCount((int) count);
+        	agentInfo.setYellowCardCount(0);
+        	
             Result<AgentInfo> clientResult = WalletRpcHandler.getAgentInfo(chainId, agentInfo.getTxHash());
             if (clientResult.isSuccess()) {
                 agentInfo.setCreditValue(clientResult.getData().getCreditValue());
                 agentInfo.setDepositCount(clientResult.getData().getDepositCount());
                 agentInfo.setStatus(clientResult.getData().getStatus());
+                
 //                if (agentInfo.getAgentAlias() == null) {
 //                    AliasInfo info = aliasService.getAliasByAddress(chainId, agentInfo.getAgentAddress());
 //                    if (null != info) {
@@ -201,7 +221,7 @@ public class PocConsensusController {
 //                }
             }
         }
-        Collections.sort(pageInfo.getList(), AgentComparator.getInstance());
+//        Collections.sort(pageInfo.getList(), AgentComparator.getInstance());
         return new RpcResult().setResult(pageInfo);
     }
 
@@ -772,9 +792,10 @@ public class PocConsensusController {
         if (pageNumber <= 0) {
             pageNumber = 1;
         }
-        if (pageSize <= 0 || pageSize > 100) {
-            pageSize = 10;
-        }
+        
+//        if (pageSize <= 0 || pageSize > 100) {
+//            pageSize = 10;
+//        }
 
         if (!CacheManager.isChainExist(chainId)) {
             return RpcResult.success(new PageInfo<>(pageNumber, pageSize));

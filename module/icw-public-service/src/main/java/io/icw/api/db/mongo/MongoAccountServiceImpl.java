@@ -3,9 +3,14 @@ package io.icw.api.db.mongo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.*;
 import io.icw.api.model.po.AccountInfo;
+import io.icw.api.model.po.AssetInfo;
+import io.icw.api.model.po.CoinContextInfo;
 import io.icw.api.model.po.PageInfo;
 import io.icw.api.model.po.TxRelationInfo;
 import io.icw.api.model.po.mini.MiniAccountInfo;
+import io.icw.api.model.rpc.BalanceInfo;
+import io.icw.api.ApiContext;
+import io.icw.api.analysis.WalletRpcHandler;
 import io.icw.api.cache.ApiCache;
 import io.icw.api.constant.ApiConstant;
 import io.icw.api.db.AccountService;
@@ -18,7 +23,10 @@ import io.icw.core.model.BigIntegerUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import static io.icw.api.constant.DBTableConstant.*;
@@ -318,12 +326,25 @@ public class MongoAccountServiceImpl implements AccountService {
         return txRelationInfoList;
     }
 
+    DecimalFormat format = new DecimalFormat("###.#####");
+    
     public PageInfo<MiniAccountInfo> getCoinRanking(int pageIndex, int pageSize, int chainId) {
+    	int assetId = 1;
+    	AssetInfo assetInfo = CacheManager.getAssetInfoMap().get(chainId + "-" + assetId);
+        if (assetInfo == null) {
+            return new PageInfo<>();
+        } else if (assetInfo.getChainId() == ApiContext.defaultChainId && assetInfo.getAssetId() == ApiContext.defaultAssetId) {
+            ApiCache apiCache = CacheManager.getCache(chainId);
+            CoinContextInfo coinContextInfo = apiCache.getCoinContextInfo();
+            assetInfo.setLocalTotalCoins(coinContextInfo.getCirculation());
+        }
+        
         Bson sort = Sorts.descending("totalBalance");
         List<MiniAccountInfo> accountInfoList = new ArrayList<>();
         Bson filter = Filters.ne("totalBalance", 0);
         BasicDBObject fields = new BasicDBObject();
-        fields.append("_id", 1).append("alias", 1).append("totalBalance", 1).append("totalOut", 1).append("totalIn", 1).append("type", 1);
+        fields.append("_id", 1).append("alias", 1).append("totalBalance", 1)
+        	.append("totalOut", 1).append("totalIn", 1).append("consensusLock", 1).append("type", 1);
 
         List<Document> docsList = this.mongoDBService.pageQuery(ACCOUNT_TABLE + chainId, filter, fields, sort, pageIndex, pageSize);
         long totalCount = mongoDBService.getCount(ACCOUNT_TABLE + chainId, filter);
@@ -331,6 +352,20 @@ public class MongoAccountServiceImpl implements AccountService {
             MiniAccountInfo accountInfo = DocumentTransferTool.toInfo(document, "address", MiniAccountInfo.class);
 //            List<Output> outputs = utxoService.getAccountUtxos(accountInfo.getAddress());
 //            CalcUtil.calcBalance(accountInfo, outputs, blockHeaderService.getBestBlockHeight());
+//            accountInfoList.add(accountInfo);
+            
+            BalanceInfo balanceInfo = WalletRpcHandler.getAccountBalance(chainId, accountInfo.getAddress(), chainId, assetId);
+            accountInfo.setLocked(balanceInfo.getConsensusLock().add(balanceInfo.getTimeLock()));
+            accountInfo.setDecimal(assetInfo.getDecimals());
+
+            BigDecimal b1 = new BigDecimal(accountInfo.getTotalBalance());
+            BigDecimal b2 = new BigDecimal(assetInfo.getLocalTotalCoins());
+            double prop = 0;
+            if (b2.compareTo(BigDecimal.ZERO) > 0) {
+                prop = b1.divide(b2, 5, RoundingMode.HALF_UP).doubleValue() * 100;
+            }
+            accountInfo.setProportion(format.format(prop) + "%");
+            
             accountInfoList.add(accountInfo);
         }
         PageInfo<MiniAccountInfo> pageInfo = new PageInfo<>(pageIndex, pageSize, totalCount, accountInfoList);

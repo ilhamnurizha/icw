@@ -272,8 +272,8 @@ public class PublicServiceBootstrap extends RpcModule {
         cacheBlockHeaderList(mongoDBService);
         //缓存所有共识节点
         MongoAgentServiceImpl agentService = SpringLiteContext.getBean(MongoAgentServiceImpl.class);
-        PageInfo<AgentInfo> agentPageInfo = agentService.getAgentList(apiConfig.getChainId(), 0, 1, 200);
-        ApiContext.agentPageInfo = agentPageInfo;
+//        PageInfo<AgentInfo> agentPageInfo = agentService.getAgentList(apiConfig.getChainId(), 0, 1, 200, null, 0);
+//        ApiContext.agentPageInfo = agentPageInfo;
 
         //缓存首页轮次信息
         cacheRoundList(mongoDBService);

@@ -33,6 +33,7 @@ import io.icw.core.rpc.util.NulsDateUtils;
 import io.icw.pow.BlockPow;
 import io.icw.rpc.AccountTools;
 import io.icw.rpc.BlockCall;
+import io.icw.rpc.CallHelper;
 import io.icw.rpc.ChainTools;
 import io.icw.rpc.LegderTools;
 import io.icw.rpc.TransactionTools;
@@ -50,7 +51,7 @@ public class PowProcess {
 
 	private AccountTools accountTools = SpringLiteContext.getBean(AccountTools.class);
     
-	private Map roundMap = new HashMap();
+	private Map<Long, BlockPow> roundMap = new HashMap<Long, BlockPow>();
 
 	PowAlgorithmThread powAlgorithmThread = new PowAlgorithmThread();
 	
@@ -64,11 +65,13 @@ public class PowProcess {
 	
 	private static long divideRound2 = 243550l;
 	private static long divideRound3 = 243800l;
+	public static long divideRound4 =  249532l;
 	
 	public static void clearCahce() {
 		membersCache.clear();
 		diffCache.clear();
 		blockCache.clear();
+		Log.info("clearCahce---------------------------");
 	}
 	
 	public static List<String> getRoundMembersByHeightIndex(long round, long blockHeight) {
@@ -77,15 +80,28 @@ public class PowProcess {
 	}
 	
 	public static List<String> getRoundMembersByHeight(long round, long blockHeight) {
+		return getRoundMembersByHeight(round, blockHeight, false);
+	}
+	
+	public static List<String> getRoundMembersByHeight(long round, long blockHeight, boolean isReal) {
 		Log.info("round: " + round + " blockHeight: " + blockHeight);
-		
+		if (round == divideRound4) {
+			clearCahce();
+			return getRoundMembersByHeightV4(round, blockHeight, isReal);
+		}
+		if (round > divideRound4) {
+			return getRoundMembersByHeightV4(round, blockHeight, isReal);
+		}
 		if (round > divideRound3) {
 			return getRoundMembersByHeightV3(round, blockHeight);
 		}
 		if (round > divideRound2) {
 			return getRoundMembersByHeightV2(round, blockHeight);
 		}
-		
+		return getRoundMembersByHeightV1(round, blockHeight);
+	}
+	
+	public static List<String> getRoundMembersByHeightV1(long round, long blockHeight) {
 		List<String> members = new ArrayList<String>();
 		BlockCall blockCall = new BlockCall();
 		while (true) {
@@ -98,7 +114,6 @@ public class PowProcess {
 			}
 			BlockExtendsData extendsData = block.getHeader().getExtendsData();
 			long bRound = extendsData.getRoundIndex() / config.getRound();
-//			Log.info("round: " + round + " bRound: " + bRound + " blockHeight: " + blockHeight);
 			if (bRound == round - 1) {
 				List<Transaction> txs = block.getTxs();
 				List<String> txMembers = new ArrayList<String>();
@@ -190,7 +205,7 @@ public class PowProcess {
 								Log.error("maxDiff: " + maxDiff + " :: getRoundMembersByHeight blockPow: " + blockPow);
 							}
 						} catch (NulsException e) {
-							e.printStackTrace();
+							Log.error("getRoundMembersByHeightV2", e);
 						}
 					}
 				}
@@ -218,7 +233,6 @@ public class PowProcess {
 		BlockCall blockCall = new BlockCall();
 		blockCache.clear();
 		Map<String, String> hashCodeMap = new HashMap<String, String>();
-		long startBlockHeight = blockHeight;
 		while (true) {
 			Block block = null;
 			try {
@@ -246,13 +260,7 @@ public class PowProcess {
 							}
 							BlockHeader header = powBlock.getHeader();
 							BlockExtendsData powExtendsData = powBlock.getHeader().getExtendsData();
-							
-//							long diff = PowProcess.getCalculateDiff(blockPow.getIndex(), startBlockHeight);
-//							String pre = "";
-//							for (int i = 0; i < blockPow.getDiff(); i++) {
-//								pre = pre + "0";
-//							}
-							
+
 							Log.info(header.getHash().toString() + "=" + blockPow.getPreHash());
 							Log.info(blockPow.generationHashCodeBySha256() + "=" + (blockPow.getHashCode()));
 							Log.info(String.valueOf(header.getExtendsData().getRoundIndex() / PowProcess.config.getRound()) 
@@ -260,17 +268,12 @@ public class PowProcess {
 							Log.info(String.valueOf((header.getExtendsData().getRoundIndex() - 1) / config.getRound()) 
 									+ "=" + String.valueOf(round - 2));
 							Log.info(blockPow.getIndex() + "=" + round);
-//							Log.info(blockPow.getDiff() + "=" + diff);
-//							Log.info(String.valueOf(blockPow.getHashCode().startsWith(pre)));
 							
 							if (header.getHash().toString().equals(blockPow.getPreHash())
 									&& blockPow.generationHashCodeBySha256().equals(blockPow.getHashCode())
 									&& header.getExtendsData().getRoundIndex() / config.getRound() == round - 1
 									&& (header.getExtendsData().getRoundIndex() - 1) / config.getRound() == round - 2
-									&& blockPow.getIndex() == round
-//									&& blockPow.getDiff() == diff
-//									&& blockPow.getHashCode().startsWith(pre)) {
-									) {
+									&& blockPow.getIndex() == round) {
 								if (hashCodeMap.containsKey(blockPow.getHashCode())) {
 									txMembers.remove(hashCodeMap.get(blockPow.getHashCode()));
 									members.remove(hashCodeMap.get(blockPow.getHashCode()));
@@ -278,13 +281,13 @@ public class PowProcess {
 									hashCodeMap.put(blockPow.getHashCode(), blockPow.getAddress());
 								}
 								txMembers.add(blockPow.getAddress());
-								Log.info("round ok: " + round + " :: getRoundMembersByHeight blockPow: " + blockPow);
+//								Log.info("round ok: " + round + " :: getRoundMembersByHeight blockPow: " + blockPow);
 							} else {
-								Log.error("round err: " + round + " :: getRoundMembersByHeight blockPow: " + blockPow);
+//								Log.error("round err: " + round + " :: getRoundMembersByHeight blockPow: " + blockPow);
 								continue;
 							}
 						} catch (NulsException e) {
-							e.printStackTrace();
+							Log.error("getRoundMembersByHeightV3", e);
 						}
 					}
 				}
@@ -306,6 +309,124 @@ public class PowProcess {
 		return ret;
 	}
 	
+	public static List<String> getRoundMembersByHeightV4(long round, long blockHeight, boolean isReal) {
+		long startTime = System.currentTimeMillis();
+		long diff = getCalculateDiffV4(round, blockHeight);
+		
+		List<String> members = new ArrayList<String>();
+		BlockCall blockCall = new BlockCall();
+		Map<String, String> hashCodeMap = new HashMap<String, String>();
+		while (true) {
+			Block block = null;
+			try {
+				block = blockCache.get(blockHeight);
+				if (block == null) { 
+					block = blockCall.getBlockByHeight(config.getChainId(), blockHeight);
+					blockCache.put(blockHeight, block);
+				}
+				blockHeight--;
+			} catch (Exception e) {
+				blockHeight--;
+				Log.error("fork?" + e);
+				continue;
+			}
+			BlockExtendsData extendsData = block.getHeader().getExtendsData();
+			long bRound = extendsData.getRoundIndex() / config.getRound();
+			if (bRound == round - 1) {
+				List<Transaction> txs = block.getTxs();
+				List<String> txMembers = new ArrayList<String>();
+				for (Transaction tx : txs) {
+					if (tx.getType() == Constant.TX_TYPE_POW) {
+						BlockPow blockPow = new BlockPow();
+				        try {
+							blockPow.parse(new NulsByteBuffer(tx.getTxData()));
+							Block powBlock = blockCache.get(blockPow.getHeight());
+							if (powBlock == null) {
+								powBlock = blockCall.getBlockByHeight(config.getChainId(), blockPow.getHeight());
+								blockCache.put(blockPow.getHeight(), powBlock);
+							}
+							BlockHeader header = powBlock.getHeader();
+//							BlockExtendsData powExtendsData = powBlock.getHeader().getExtendsData();
+							
+							String pre = "";
+							for (int i = 0; i < blockPow.getDiff(); i++) {
+								pre = pre + "0";
+							}
+							
+//							Log.info(header.getHash().toString() + "=" + blockPow.getPreHash());
+//							Log.info(blockPow.generationHashCodeBySha256() + "=" + (blockPow.getHashCode()));
+//							Log.info(String.valueOf(header.getExtendsData().getRoundIndex() / PowProcess.config.getRound()) 
+//									+ "=" + String.valueOf(round - 1));
+//							Log.info(String.valueOf((header.getExtendsData().getRoundIndex() - 1) / config.getRound()) 
+//									+ "=" + String.valueOf(round - 2));
+//							Log.info(blockPow.getIndex() + "=" + round);
+//							Log.info(blockPow.getDiff() + "=" + diff);
+//							Log.info(String.valueOf(blockPow.getHashCode().startsWith(pre)));
+							
+							if (header.getHash().toString().equals(blockPow.getPreHash())
+									&& blockPow.generationHashCodeBySha256().equals(blockPow.getHashCode())
+									&& header.getExtendsData().getRoundIndex() / config.getRound() == round - 1
+									&& (header.getExtendsData().getRoundIndex() - 1) / config.getRound() == round - 2
+									&& blockPow.getIndex() == round
+									&& blockPow.getDiff() == diff
+									&& blockPow.getHashCode().startsWith(pre)) {
+								if (hashCodeMap.containsKey(blockPow.getHashCode())) {
+									txMembers.remove(hashCodeMap.get(blockPow.getHashCode()));
+									members.remove(hashCodeMap.get(blockPow.getHashCode()));
+								} else {
+									hashCodeMap.put(blockPow.getHashCode(), blockPow.getAddress());
+								}
+								txMembers.add(blockPow.getAddress());
+//								Log.info("round ok: " + round + " :: getRoundMembersByHeight blockPow: " + blockPow);
+							} else {
+//								Log.error("round err: " + round + " :: getRoundMembersByHeight blockPow: " + blockPow);
+								continue;
+							}
+						} catch (Exception e) {
+							Log.error("getRoundMembersByHeightV4:" + blockPow, e);
+						}
+					}
+				}
+				Collections.reverse(txMembers);
+				members.addAll(txMembers);
+			}
+			if (bRound < round - 1) {
+				break;
+			}
+		}
+		Collections.reverse(members);
+		
+		List<String> ret = new ArrayList<String>();
+		for (int i = 0; i < members.size() && i < config.getPackNumber(); i++) {
+			ret.add(members.get(i));
+		}
+		
+		if (!isReal) {
+			if (ret.size() != config.getPackNumber()) {
+				try {
+					Map configMap = CallHelper.getConsensusConfig(config.getChainId());
+			        String seeds = configMap.get("seedNodes").toString();
+			        List<String> seedNodes = new ArrayList<>();
+			        for (String seed : seeds.split(",")) {
+			            seedNodes.add(seed);
+			        }
+			        seedNodes.removeAll(ret);
+			        if (config.getPackNumber() - ret.size() - seedNodes.size() >= 0) {
+			        	ret.addAll(seedNodes);
+			        } else {
+			        	ret.addAll(seedNodes.subList(0, config.getPackNumber() - ret.size()));
+			        }
+				} catch (NulsException e) {
+					Log.error(e);
+				}
+			}
+		}
+		
+		long endTime = System.currentTimeMillis();
+		Log.info("cost: " + (endTime - startTime) + " round: " + round + " blockHeight: " + blockHeight + " members: " + ret);
+		return ret;
+	}
+
 	public static List<BlockPow> getRoundMembers(long round, long blockHeight) {
 		String key = round + "_" ;//+ blockHeight;
 		List<BlockPow> members = membersCache.get(key);
@@ -319,7 +440,6 @@ public class PowProcess {
 			Block block = blockCall.getBlockByHeight(config.getChainId(), blockHeight--);
 			BlockExtendsData extendsData = block.getHeader().getExtendsData();
 			long bRound = extendsData.getRoundIndex() / config.getRound();
-//			Log.info("round: " + round + " bRound: " + bRound + " blockHeight: " + blockHeight);
 			if (bRound == round - 1) {
 				List<Transaction> txs = block.getTxs();
 				List<BlockPow> txMembers = new ArrayList<BlockPow>();
@@ -352,6 +472,88 @@ public class PowProcess {
 		return members;
 	}
 	
+	private static List<BlockPow> getRoundMembersV4(long round, long blockHeight) {
+		long startTime = System.currentTimeMillis();
+		
+		List<BlockPow> members = new ArrayList<BlockPow>();
+		BlockCall blockCall = new BlockCall();
+		blockCache.clear();
+		Map<String, BlockPow> hashCodeMap = new HashMap<String, BlockPow>();
+		while (true) {
+			Block block = null;
+			try {
+				block = blockCache.get(blockHeight);
+				if (block == null) { 
+					block = blockCall.getBlockByHeight(config.getChainId(), blockHeight);
+					blockCache.put(blockHeight, block);
+				}
+				blockHeight--;
+			} catch (Exception e) {
+				blockHeight--;
+				Log.error("fork?" + e);
+				continue;
+			}
+			BlockExtendsData extendsData = block.getHeader().getExtendsData();
+			long bRound = extendsData.getRoundIndex() / config.getRound();
+			
+//			Log.info("bRound:::::::: " + bRound + " blockHeight: " + blockHeight);
+			
+			if (bRound == round - 1) {
+				List<Transaction> txs = block.getTxs();
+				List<BlockPow> txMembers = new ArrayList<BlockPow>();
+				for (Transaction tx : txs) {
+					if (tx.getType() == Constant.TX_TYPE_POW) {
+						BlockPow blockPow = new BlockPow();
+				        try {
+							blockPow.parse(new NulsByteBuffer(tx.getTxData()));
+							Block powBlock = blockCache.get(blockPow.getHeight());
+							if (powBlock == null) {
+								powBlock = blockCall.getBlockByHeight(config.getChainId(), blockPow.getHeight());
+								blockCache.put(blockPow.getHeight(), powBlock);
+							}
+							BlockHeader header = powBlock.getHeader();
+							BlockExtendsData powExtendsData = powBlock.getHeader().getExtendsData();
+
+							String pre = "";
+							for (int i = 0; i < blockPow.getDiff(); i++) {
+								pre = pre + "0";
+							}
+							
+							if (header.getHash().toString().equals(blockPow.getPreHash())
+									&& blockPow.generationHashCodeBySha256().equals(blockPow.getHashCode())
+									&& header.getExtendsData().getRoundIndex() / config.getRound() == round - 1
+									&& (header.getExtendsData().getRoundIndex() - 1) / config.getRound() == round - 2
+									&& blockPow.getIndex() == round
+									&& blockPow.getHashCode().startsWith(pre)) {
+								if (hashCodeMap.containsKey(blockPow.getHashCode())) {
+									txMembers.remove(hashCodeMap.get(blockPow.getHashCode()));
+									members.remove(hashCodeMap.get(blockPow.getHashCode()));
+								} else {
+									hashCodeMap.put(blockPow.getHashCode(), blockPow);
+								}
+								txMembers.add(blockPow);
+							} else {
+								continue;
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				Collections.reverse(txMembers);
+				members.addAll(txMembers);
+			}
+			if (bRound < round - 1) {
+				break;
+			}
+		}
+		Collections.reverse(members);
+		
+		long endTime = System.currentTimeMillis();
+		Log.info("cost: " + (endTime - startTime) + " round: " + round + " blockHeight: " + blockHeight + " members:" + members.size());
+		return members;
+	}
+
 	public PowProcess() {
 		config = SpringLiteContext.getBean(Config.class);
 		singleThreadExecutor.execute(powAlgorithmThread);
@@ -376,25 +578,28 @@ public class PowProcess {
     }
     
     public static long getCalculateDiff(long round, long blockHeight) {
-    	round--;
-    	
     	long cacheKey = round;
     	
     	long diff = 0;
-    	Log.info(diffCache.toString());
     	
     	Long diffLong = diffCache.get(round);
     	Log.info("diffLong=" + diffLong + "::" + round + "::" + blockHeight);
-    	
+
     	if (diffLong != null) {
     		diff = diffLong.longValue();
     		Log.info("diff=" + diff);
     		return diff;
     	}
     	
+    	round--;
     	List<BlockPow> members = getRoundMembers(round, blockHeight);
     	if (!members.isEmpty()) {
-			diff = members.get(0).getDiff();
+    		for (BlockPow blockPow : members) {
+    			if (blockPow.getDiff() > diff) {
+    				diff = blockPow.getDiff();
+    			}
+    		}
+    		Log.info("members size: " + members.size() + " max diff: " + diff);
 		} else {
 			for (diff = config.getDiff(); diff > 0; diff--) {
 	    		round--;
@@ -429,21 +634,80 @@ public class PowProcess {
     	
     	
     	diffCache.put(cacheKey, diff);
-    	Log.info(cacheKey + "::" + diffCache.toString());
+//    	Log.info(cacheKey + "::" + diffCache.toString());
 
     	return diff;
     }
     
+    public static long getCalculateDiffV4(long round, long blockHeight) {
+//    	long cacheKey = round;
+    	
+    	long diff = 0;
+    	
+//    	Long diffLong = diffCache.get(round);
+//    	Log.info("diffLong=" + diffLong + "::" + round + "::" + blockHeight);
+//    	
+//    	if (diffLong != null) {
+//    		diff = diffLong.longValue();
+//    		Log.info("diff=" + diff);
+//    		return diff;
+//    	}
+    	
+    	round--;
+    	List<BlockPow> members = getRoundMembersV4(round, blockHeight);
+    	if (!members.isEmpty()) {
+    		for (BlockPow blockPow : members) {
+    			if (blockPow.getDiff() > diff) {
+    				diff = blockPow.getDiff();
+    			}
+    		}
+    		Log.info("members size: " + members.size() + " max diff: " + diff);
+		} else {
+			diff = config.getDiff();
+//			for (diff = config.getDiff(); diff > 0; diff--) {
+//	    		round--;
+//	    		List<BlockPow> preMembers = getRoundMembersV4(round, blockHeight);
+//	    		if (!preMembers.isEmpty()) {
+//	    			diff = preMembers.get(0).getDiff();
+//	    			break;
+//	    		}
+//			}
+		}
+		
+    	if (members.size() < config.getPackNumber()){
+    		diff = diff - 1;
+    		Log.info("diff=" + diff);
+    	} else {
+    		long time = 0;
+    		for (BlockPow blockPow : members) {
+    			time += blockPow.getTimestamp() - blockPow.getPowTimestamp();
+    			diff = blockPow.getDiff();
+    		}
+    		double avgtime = time / members.size();
+    		
+    		Log.info("avgtime: " + avgtime); // + " members: " + members);
+//    		if (avgtime / getRoundTime() < 0.2) {
+    		if (avgtime < 24 * 1000) {
+    			diff = diff + 1;
+    			Log.info("diff=" + diff);
+    		}
+    		Log.info("diff=" + diff);
+    	}
+    	
+    	diff = diff < 1 ? 1 : diff;
+    	
+    	
+//    	diffCache.put(cacheKey, diff);
+
+    	return diff;
+    }
+
 	private void doWork(int chainId) {
-//		Log.info("doWork = " + chainId);
 		try {
-//			MeetingRound meetingRound = chainTools.getRoundInfo(chainId);
-//			Log.info("meetingRound: " + meetingRound);
 			BlockHeader blockHeader = BlockCall.getLatestBlockHeader( config.getChainId() );
 			long roundIndex = blockHeader.getExtendsData().getRoundIndex();
 			long round = roundIndex / config.getRound();
 			round++;
-//			Log.info("roundIndex=" + roundIndex + " round=" + round);
 			
 			if (roundMap.get(round) == null) {
 				Map<String, String> addressMap = chainTools.getPackingAddress(chainId);
@@ -458,16 +722,14 @@ public class PowProcess {
 				Map agentAddress = chainTools.getAgentAddressList(chainId);
 				List<String> packAddress = (List<String>)agentAddress.get("packAddress");
 				if (packAddress != null && packAddress.size() > 50) {
-					List<String> members = getRoundMembersByHeight(round - 1, blockHeader.getHeight());
+					List<String> members = getRoundMembersByHeight(round - 1, blockHeader.getHeight(), true);
 					if (members.contains(address)) {
 						return;
 					}
 				}
 				
-//				BlockHeader blockHeader = BlockCall.getLatestBlockHeader( config.getChainId() );
 				powAlgorithmThread.setBlockHeader(round, blockHeader, address);
-//				BlockExtendsData extendsData = blockHeader.getExtendsData();
-//				long roundIndex = extendsData.getRoundIndex();
+
 				BlockPow blockPow = powAlgorithmThread.getBlockPow(round);
 				if (blockPow != null) {
 					Log.info("round: " + round + " blockPow: " + blockPow);

@@ -92,7 +92,7 @@ public class OtherModuleMessageHandler extends BaseMessageHandler {
         paramMap.put("cmd", cmd);
         String messageBody = RPCUtil.encode(payLoadBody);
         paramMap.put("messageBody", messageBody);
-        LoggerUtil.COMMON_LOG.info("recieve : " + paramMap.toString());
+//        LoggerUtil.COMMON_LOG.info("recieve : " + paramMap.toString());
         Map<String, CmdPriority> protocolRoles = MessageHandlerFactory.getInstance().getProtocolRoleHandlerMap(cmd);
         if (protocolRoles == null || protocolRoles.isEmpty()) {
             LoggerUtil.logger(chainId).error("unknown mssages. cmd={},handler may be unRegistered to network.", cmd);

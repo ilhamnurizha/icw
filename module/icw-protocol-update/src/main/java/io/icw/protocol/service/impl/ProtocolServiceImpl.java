@@ -269,6 +269,9 @@ public class ProtocolServiceImpl implements ProtocolService {
             statisticsInfo.setProtocolVersion(currentProtocolVersion);
             statisticsInfo.setProtocolVersionMap(proportionMap);
             //计数统计
+            if ( (short) (context.getCurrentProtocolVersionCount() + 1) < 0) {
+            	context.setCurrentProtocolVersionCount(20);
+            }
             statisticsInfo.setCount((short) (context.getCurrentProtocolVersionCount() + 1));
             context.setCurrentProtocolVersionCount(context.getCurrentProtocolVersionCount() + 1);
             protocolService.saveCurrentProtocolVersionCount(chainId, context.getCurrentProtocolVersionCount());

@@ -351,6 +351,7 @@ public class RoundManager {
     private MeetingRound getRoundByRealTime(Chain chain, boolean filter) throws Exception {
         BlockHeader bestBlockHeader = chain.getNewestHeader();
         BlockHeader startBlockHeader = bestBlockHeader;
+        BlockHeader endBlockHeader = bestBlockHeader;
         BlockExtendsData bestRoundData = bestBlockHeader.getExtendsData();
         long bestRoundEndTime = bestRoundData.getRoundEndTime(chain.getConfig().getPackingInterval());
         if (startBlockHeader.getHeight() != 0L) {
@@ -363,6 +364,7 @@ public class RoundManager {
                 roundIndex += 1;
             }
             startBlockHeader = getFirstBlockOfPreRound(chain, roundIndex);
+            endBlockHeader = getLastBlockOfPreRound(chain, roundIndex);
         }
         long nowTime = NulsDateUtils.getCurrentTimeSeconds();
         long index;
@@ -385,7 +387,7 @@ public class RoundManager {
             index = bestRoundData.getRoundIndex() + diffRoundCount + 1;
             startTime = bestRoundEndTime + diffRoundCount * consensusMemberCount * packingInterval;
         }
-        return calculationRound(chain, startBlockHeader, index, startTime, filter, true);
+        return calculationRound(chain, startBlockHeader, endBlockHeader, index, startTime, filter, true);
     }
 
     /**
@@ -413,24 +415,29 @@ public class RoundManager {
      */
     private MeetingRound getRoundByExpectedRound(Chain chain, BlockExtendsData roundData, boolean isRealTime) throws Exception {
         BlockHeader startBlockHeader = chain.getNewestHeader();
+        BlockHeader endBlockHeader = chain.getNewestHeader();
         long roundIndex = roundData.getRoundIndex();
         long roundStartTime = roundData.getRoundStartTime();
         if (startBlockHeader.getHeight() != 0L) {
             startBlockHeader = getFirstBlockOfPreRound(chain, roundIndex);
+            endBlockHeader = getLastBlockOfPreRound(chain, roundIndex);
         }
-        return calculationRound(chain, startBlockHeader, roundIndex, roundStartTime, true, false);
+        return calculationRound(chain, startBlockHeader, endBlockHeader, roundIndex, roundStartTime, true, false);
     }
 
     public MeetingRound getRoundByRoundIndex(Chain chain, long roundIndex, long roundStartTime) throws Exception {
         BlockHeader startBlockHeader = chain.getNewestHeader();
+        BlockHeader endBlockHeader = chain.getNewestHeader();
         if (startBlockHeader.getHeight() != 0L) {
             startBlockHeader = getFirstBlockOfPreRound(chain, roundIndex);
+            endBlockHeader = getLastBlockOfPreRound(chain, roundIndex);
         }
-        return calculationRound(chain, startBlockHeader, roundIndex, roundStartTime);
+        return calculationRound(chain, startBlockHeader, endBlockHeader, roundIndex, roundStartTime);
+        
     }
 
-    private MeetingRound calculationRound(Chain chain, BlockHeader startBlockHeader, long index, long startTime) throws Exception {
-    	return calculationRound(chain, startBlockHeader, index, startTime, true, true);
+    private MeetingRound calculationRound(Chain chain, BlockHeader startBlockHeader, BlockHeader endBlockHeader, long index, long startTime) throws Exception {
+    	return calculationRound(chain, startBlockHeader, endBlockHeader, index, startTime, true, true);
     }
     
     /**
@@ -443,11 +450,11 @@ public class RoundManager {
      * @param startTime        轮次开始打包时间/start time
      */
     @SuppressWarnings("unchecked")
-    private MeetingRound calculationRound(Chain chain, BlockHeader startBlockHeader, long index, long startTime, boolean filter, boolean isRealTime) throws Exception {
+    private MeetingRound calculationRound(Chain chain, BlockHeader startBlockHeader, BlockHeader endBlockHeader, long index, long startTime, boolean filter, boolean isRealTime) throws Exception {
         MeetingRound round = new MeetingRound();
         round.setIndex(index);
         round.setStartTime(startTime);
-        setMemberList(chain, round, startBlockHeader, filter, isRealTime);
+        setMemberList(chain, round, startBlockHeader, endBlockHeader, filter, isRealTime);
         List<byte[]> packingAddressList = CallMethodUtils.getEncryptedAddressList(chain);
         if (!packingAddressList.isEmpty()) {
             round.calcLocalPacker(packingAddressList, chain);
@@ -465,14 +472,14 @@ public class RoundManager {
      * @param round            轮次信息/round info
      * @param startBlockHeader 上一轮次的起始区块/Initial blocks of the last round
      */
-    private void setMemberList(Chain chain, MeetingRound round, BlockHeader startBlockHeader, boolean filter, boolean isRealTime) throws NulsException {
+    private void setMemberList(Chain chain, MeetingRound round, BlockHeader startBlockHeader, BlockHeader endBlockHeader, boolean filter, boolean isRealTime) throws NulsException {
         List<MeetingMember> memberList = new ArrayList<>();
         List<String> members = new ArrayList<String>();
 		try {
 			if (filter) {
 				Map<String, Object> callParams = new HashMap<>(4);
 		        callParams.put("roundIndex", round.getIndex());
-		        callParams.put("blockHeight", startBlockHeader.getHeight());
+		        callParams.put("blockHeight", endBlockHeader.getHeight());
 		        callParams.put("isRealTime", isRealTime); 
 				Response cmdResp = ResponseMessageProcessor.requestAndResponse("pow", "pow_roundMembers", callParams);
 				Log.info(cmdResp.getResponseErrorCode() 
@@ -500,7 +507,7 @@ public class RoundManager {
             seedNodes = seedNodesStr.split(",");
             for (String address : seedNodes) {
             	if (!members.isEmpty() && !members.contains(address)) {
-            		Log.info("pass: " + address);
+//            		Log.info("pass: " + address);
             		continue;
             	}
                 byte[] addressByte = AddressTool.getAddress(address);
@@ -551,9 +558,9 @@ public class RoundManager {
             if (isItIn) {
                 realAgent.setCreditVal(calcCreditVal(chain, member, startBlockHeader));
                 String address = AddressTool.getStringAddressByBytes(member.getAgent().getPackingAddress());
-                Log.info("PackingAddress: " + address);
+//                Log.info("PackingAddress: " + address);
                 if (!members.isEmpty() && !members.contains(address)) {
-                	Log.info("pass: " + address);
+//                	Log.info("pass: " + address);
             		continue;
             	}
                 memberList.add(member);
@@ -725,6 +732,24 @@ public class RoundManager {
             chain.getLogger().warn("the first block of pre round not found");
         }
         return firstBlockHeader;
+    }
+    
+    public BlockHeader getLastBlockOfPreRound(Chain chain, long roundIndex) {
+        BlockHeader lastBlockHeader = null;
+        List<BlockHeader> blockHeaderList = chain.getBlockHeaderList();
+        for (int i = blockHeaderList.size() - 1; i >= 0; i--) {
+            BlockHeader blockHeader = blockHeaderList.get(i);
+            long currentRoundIndex = blockHeader.getExtendsData().getRoundIndex();
+            if (roundIndex > currentRoundIndex) {
+            	lastBlockHeader = blockHeader;
+            	break;
+            }
+        }
+        if (lastBlockHeader == null) {
+        	lastBlockHeader = chain.getNewestHeader();
+            chain.getLogger().warn("the first block of pre round not found");
+        }
+        return lastBlockHeader;
     }
 
     /**

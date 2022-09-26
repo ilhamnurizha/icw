@@ -25,9 +25,13 @@
 package io.icw.network;
 
 import io.icw.core.model.ByteUtils;
+import io.icw.network.constant.NetworkConstant;
 import io.icw.network.model.Node;
+import io.icw.network.model.po.GroupNodesPo;
 import io.icw.network.utils.LoggerUtil;
 import org.junit.Test;
+import org.rocksdb.RocksDB;
+import org.rocksdb.RocksDBException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -128,7 +132,12 @@ public class Test1 {
     }
 
     @Test
-    public void test8() {
-
+    public void test8() throws Exception {
+    	String dbPath = "E:\\network\\nw_group_nodes\\rocksdb";
+    	RocksDB db = RocksDB.open(dbPath);
+    	System.out.println(db.get(ByteUtils.intToBytes(1)));
+    	GroupNodesPo groupNodesPo = new GroupNodesPo();
+        groupNodesPo.parse(db.get(ByteUtils.intToBytes(1)), 0);
+        System.out.println(groupNodesPo);
     }
 }

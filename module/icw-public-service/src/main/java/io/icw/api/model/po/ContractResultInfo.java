@@ -12,7 +12,9 @@ public class ContractResultInfo {
 
     private String contractAddress;
 
-    private boolean success;
+    private String contractMethod;
+
+	private boolean success;
 
     private String errorMessage;
 
@@ -122,6 +124,14 @@ public class ContractResultInfo {
     public void setContractAddress(String contractAddress) {
         this.contractAddress = contractAddress;
     }
+    
+    public String getContractMethod() {
+		return contractMethod;
+	}
+
+	public void setContractMethod(String contractMethod) {
+		this.contractMethod = contractMethod;
+	}
 
     public boolean isSuccess() {
         return success;

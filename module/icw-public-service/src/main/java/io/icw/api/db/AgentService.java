@@ -25,8 +25,8 @@ public interface AgentService {
     void rollbackAgentList(int chainId, List<AgentInfo> agentInfoList);
 
     List<AgentInfo> getAgentList(int chainId, long startHeight);
-
-    PageInfo<AgentInfo> getAgentList(int chainId, int type, int pageNumber, int pageSize);
+    
+    PageInfo<AgentInfo> getAgentList(int chainId, int type, int pageNumber, int pageSize, String keyword, int order);
 
     PageInfo<AgentInfo> getAgentList(int chainId, int pageNumber, int pageSize);
 

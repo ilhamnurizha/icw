@@ -105,6 +105,8 @@ public class MongoDBTableServiceImpl implements DBTableService {
         mongoDBService.createCollection(DBTableConstant.CONTRACT_TX_TABLE + chainId);
         mongoDBService.createCollection(DBTableConstant.TOKEN_TRANSFER_TABLE + chainId);
         mongoDBService.createCollection(DBTableConstant.CONTRACT_RESULT_TABLE + chainId);
+        mongoDBService.createCollection(DBTableConstant.CONTRACT_ORDER_TABLE + chainId);
+        mongoDBService.createCollection(DBTableConstant.CONTRACT_TRADE_TABLE + chainId);
         mongoDBService.createCollection(DBTableConstant.STATISTICAL_TABLE + chainId);
 
         mongoDBService.createCollection(DBTableConstant.ACCOUNT_TOKEN721_TABLE + chainId);
@@ -159,6 +161,11 @@ public class MongoDBTableServiceImpl implements DBTableService {
 
         mongoDBService.createIndex(DBTableConstant.CONTRACT_TX_TABLE + chainId, Indexes.ascending("contractAddress"));
         mongoDBService.createIndex(DBTableConstant.CONTRACT_TX_TABLE + chainId, Indexes.descending("time"));
+        
+        mongoDBService.createIndex(DBTableConstant.CONTRACT_ORDER_TABLE + chainId, Indexes.descending("contractAddress", "pairAddress", "time"));
+        mongoDBService.createIndex(DBTableConstant.CONTRACT_ORDER_TABLE + chainId, Indexes.descending("address", "time"));
+        
+        mongoDBService.createIndex(DBTableConstant.CONTRACT_TRADE_TABLE + chainId, Indexes.descending("pairAddress", "time"));
     }
 
 }

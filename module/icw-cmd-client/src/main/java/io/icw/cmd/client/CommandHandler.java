@@ -266,6 +266,7 @@ public class CommandHandler implements InitializingBean {
             if (System.Logger.Level.DEBUG.getName().equals(System.getProperty("log.level"))) {
                 e.printStackTrace();
             }
+            e.printStackTrace();
             System.out.println(CommandConstant.EXCEPTION + ": " + e.getMessage());
         }
     }

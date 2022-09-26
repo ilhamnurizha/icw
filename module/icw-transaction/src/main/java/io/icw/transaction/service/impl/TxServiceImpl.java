@@ -1935,10 +1935,15 @@ public class TxServiceImpl implements TxService {
             long blockHeight = chain.getBestBlockHeight() + 1;
 
             long packableTime = endtimestamp - startTime;
-            nulsLogger.info("[Package start] -可打包时间：{}, -可打包容量：{}B , - height:{}, - 当前待打包队列交易hash数:{}, - 待打包队列实际交易数:{}",
-                    packableTime, maxTxDataSize, blockHeight, packablePool.packableHashQueueSize(chain), packablePool.packableTxMapSize(chain));
-            long batchValidReserve = TxConstant.PACKAGE_MODULE_VALIDATOR_RESERVE_TIME;
-            if (packableTime <= batchValidReserve) {
+            
+//            long batchValidReserve = TxConstant.PACKAGE_MODULE_VALIDATOR_RESERVE_TIME;
+            long batchValidReserve = packableTime - 1000;
+            
+            nulsLogger.info("[Package start] -可打包时间：{}, -可打包容量：{}B , - height:{}, - 当前待打包队列交易hash数:{}, - 待打包队列实际交易数:{}, - batchValidReserve:{}",
+                    packableTime, maxTxDataSize, blockHeight, packablePool.packableHashQueueSize(chain), packablePool.packableTxMapSize(chain)
+                    ,batchValidReserve);
+            
+            if (batchValidReserve < TxConstant.PACKAGE_MODULE_VALIDATOR_RESERVE_TIME) {
                 //直接打空块
                 return new TxPackage(new ArrayList<>(), null, chain.getBestBlockHeight() + 1);
             }
@@ -2004,10 +2009,10 @@ public class TxServiceImpl implements TxService {
                 long currentTimeMillis = NulsDateUtils.getCurrentTimeMillis();
                 long currentReserve = endtimestamp - currentTimeMillis;
                 if (currentReserve <= batchValidReserve) {
-                    if (nulsLogger.isDebugEnabled()) {
-                        nulsLogger.debug("获取交易时间到,进入模块验证阶段: currentTimeMillis:{}, -endtimestamp:{}, -offset:{}, -remaining:{}",
+//                    if (nulsLogger.isDebugEnabled()) {
+                        nulsLogger.info("获取交易时间到,进入模块验证阶段: currentTimeMillis:{}, -endtimestamp:{}, -offset:{}, -remaining:{}",
                                 currentTimeMillis, endtimestamp, batchValidReserve, currentReserve);
-                    }
+//                    }
                     backTempPackablePool(chain, currentBatchPackableTxs);
                     break;
                 }

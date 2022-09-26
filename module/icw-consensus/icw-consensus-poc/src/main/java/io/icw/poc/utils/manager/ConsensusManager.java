@@ -376,6 +376,7 @@ public class ConsensusManager {
 
     @SuppressWarnings("unchecked")
     private List<CoinTo> getRewardCoin2(Chain chain, MeetingRound localRound, long unlockHeight, BlockExtendsData extendsData)throws Exception{
+//    	chain.getLogger().info("getRewardCoin2 start:" + System.currentTimeMillis());
         Map<String,Object> param = new HashMap<>(4);
 
         RoundInfo roundInfo = new RoundInfo(localRound.getTotalWeight(),localRound.getStartTime(),localRound.getEndTime(),localRound.getMemberCount());
@@ -386,23 +387,21 @@ public class ConsensusManager {
         List<MeetingMember> allMmembers = allMeetingRound.getMemberList();
         List<MeetingMember> members = meetingRound.getMemberList();
         List<MeetingMember> rewardMembers = new ArrayList<MeetingMember>();
+        
+        Map<String, MeetingMember> memberMap = new HashMap<String, MeetingMember>();
+        for (MeetingMember member : members) {
+        	memberMap.put(AddressTool.getStringAddressByBytes(member.getAgent().getPackingAddress()), member);
+    	}
+        
         for (MeetingMember allMember : allMmembers) {
-        	boolean found = false;
-        	for (MeetingMember member : members) {
-				if (AddressTool.getStringAddressByBytes(allMember.getAgent().getPackingAddress())
-						.equals(AddressTool.getStringAddressByBytes(member.getAgent().getPackingAddress()))) {
-					found = true;
-					break;
-				}
-        	}
-        	if (!found) {
+        	if (!memberMap.containsKey(AddressTool.getStringAddressByBytes(allMember.getAgent().getPackingAddress()))) {
         		rewardMembers.add(allMember);
         	}
         }
         
-        chain.getLogger().error("getRewardCoin2 : " + allMmembers.toString());
-        chain.getLogger().error("getRewardCoin2 : " + members.toString());
-        chain.getLogger().error("getRewardCoin2 : " + rewardMembers.toString());
+//        chain.getLogger().error("getRewardCoin2 : " + allMmembers.toString());
+//        chain.getLogger().error("getRewardCoin2 : " + members.toString());
+//        chain.getLogger().error("getRewardCoin2 : " + rewardMembers.toString());
         
         if (!rewardMembers.isEmpty()) {
 	        List<AgentInfo> agentInfos = new ArrayList<AgentInfo>();
@@ -426,6 +425,7 @@ public class ConsensusManager {
 	            chain.getLogger().error("Miscalculation of Consensus Reward");
 	            throw new NulsException(result.getErrorCode());
 	        }
+//	        chain.getLogger().info("getRewardCoin2 end:" + System.currentTimeMillis());
 	        return (List<CoinTo>) ((Map<String,Object>) result.getData()).get("coinToList");
         } else {
         	return new ArrayList<CoinTo>();

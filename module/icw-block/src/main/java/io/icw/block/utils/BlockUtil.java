@@ -20,6 +20,7 @@
 
 package io.icw.block.utils;
 
+import io.icw.base.basic.AddressTool;
 import io.icw.base.data.*;
 import io.icw.block.constant.BlockErrorCode;
 import io.icw.block.constant.ChainTypeEnum;
@@ -147,11 +148,17 @@ public class BlockUtil {
             return true;
         }
         if (mainCode.equals(BlockErrorCode.IRRELEVANT_BLOCK)) {
-            //2.与主链没有关联,进入分叉链判断流程
+        	ChainContext context = ContextManager.getContext(chainId);
+        	NulsLogger logger = context.getLogger();
+        	logger.error("forkVerify fork: " + block.getNodeId() + " : " + AddressTool.getStringAddressByBytes(block.getHeader().getPackingAddress(chainId)));
+        	logger.error("forkVerify fork: " + block.getHeader());
+        	//2.与主链没有关联,进入分叉链判断流程
             ErrorCode forkCode = forkChainProcess(chainId, block).getErrorCode();
             if (forkCode.equals(BlockErrorCode.IRRELEVANT_BLOCK)) {
                 //3.与分叉链没有关联,进入孤儿链判断流程
-                orphanChainProcess(chainId, block);
+            	logger.error("forkVerify orphan: " + block.getNodeId() + " : " + AddressTool.getStringAddressByBytes(block.getHeader().getPackingAddress(chainId)));
+                
+            	orphanChainProcess(chainId, block);
             }
         }
         return false;
